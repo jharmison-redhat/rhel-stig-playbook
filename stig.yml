@@ -2,6 +2,16 @@
   hosts: all
   become: yes
   tasks:
+  - name: Ensure everything is up to date
+    package:
+      name: '*'
+      state: latest
+    register: updates
+
+  - name: Reboot the node to apply all changes from updates
+    reboot:
+    when: updates.changed
+
   - name: Preinstall fapolicyd
     package:
       name: fapolicyd
