@@ -10,6 +10,12 @@
     stig_profile: xccdf_mil.disa.stig_profile_MAC-2_Public
     results_name: '{{ stig_profile }}-{{ ansible_date_time.iso8601_basic_short }}'
   tasks:
+  - name: Leave early if not using a supported OS for this playbook
+    meta: end_host
+    when:
+    - ansible_distribution != "RedHat"
+    - ansible_distribution_major_version not in ["7", "8"]
+
   - name: Ensure download directory exists
     file:
       path: /tmp/{{ stig_download_file }}
