@@ -1,0 +1,83 @@
+---
+- name: Run the STIG scan with the oscap and content from DISA
+  hosts: all
+  vars:
+    stig_download_files:
+      rhel8: U_RHEL_8_V1R3_STIG_SCAP_1-2_Benchmark
+      rhel7: U_RHEL_7_V3R5_STIG_SCAP_1-2_Benchmark
+    stig_download_file: '{{ stig_download_files["rhel" + ansible_distribution_major_version] }}'
+    stig_download_url: https://dl.dod.cyber.mil/wp-content/uploads/stigs/zip
+    stig_profile: xccdf_mil.disa.stig_profile_MAC-2_Public
+    results_name: '{{ stig_profile }}-{{ ansible_date_time.iso8601_basic_short }}'
+  tasks:
+  - name: Ensure download directory exists
+    file:
+      path: /tmp/{{ stig_download_file }}
+      state: directory
+
+  - name: Ensure reporting directory exists
+    become: yes
+    file:
+      path: /var/www/html/stig
+      state: directory
+
+  - name: Download and unarchive the content from {{ stig_download_file }}
+    unarchive:
+      src: '{{ stig_download_url }}/{{ stig_download_file }}.zip'
+      dest: /tmp/{{ stig_download_file }}
+      remote_src: yes
+
+  - name: Identify SCAP datastream from STIG
+    find:
+      paths: /tmp/{{ stig_download_file }}
+      file_type: file
+      recurse: true
+      patterns: '*Benchmark.xml'
+    register: datastreams
+
+  - name: Ensure OpenSCAP and httpd are installed
+    become: yes
+    package:
+      name:
+        - openscap-scanner
+        - httpd
+      state: installed
+
+  - name: Ensure httpd is running
+    become: yes
+    service:
+      name: httpd
+      enabled: true
+      state: started
+
+  - name: Ensure http port is accessible
+    become: yes
+    ansible.posix.firewalld:
+      service: http
+      permanent: yes
+      immediate: yes
+      state: enabled
+
+  - name: Run a scan using the {{ stig_profile }} profile from {{ datastreams.files[0].path }}
+    become: yes
+    command: >-
+      oscap xccdf eval
+      --profile {{ stig_profile }}
+      --results /var/www/html/stig/results-{{ results_name }}.xml
+      --report /var/www/html/stig/report-{{ results_name }}.html
+      {{ datastreams.files[0].path }}
+    ignore_errors: yes
+
+  - name: Ensure reports are readable with SELinux enforcing
+    file:
+      path: /var/www/html/stig/{{ item }}
+      setype: httpd_sys_content_t
+    loop:
+    - results-{{ results_name }}.xml
+    - report-{{ results_name }}.html
+
+  - name: Provide a link to the report url
+    debug:
+      msg: >-
+        You can access the HTML stig report from this run at
+        http://{{ ansible_default_ipv4.address }}/stig/report-{{ results_name }}.html

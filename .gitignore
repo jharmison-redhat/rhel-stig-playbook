@@ -1,1 +1,6 @@
 tags
+tags.lock
+venv
+*.swp
+*.log
+.vault
