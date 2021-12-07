@@ -6,6 +6,8 @@ venv
 .vault
 roles/*
 !roles/requirements.yml
+collections/*
+!collections/requirements.yml
 meta/*
 !meta/requirements.yml
 !meta/execution-environment.yml
