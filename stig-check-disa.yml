@@ -69,9 +69,11 @@
     ignore_errors: yes
 
   - name: Ensure reports are readable with SELinux enforcing
+    become: yes
     file:
       path: /var/www/html/stig/{{ item }}
       setype: httpd_sys_content_t
+      mode: '0644'
     loop:
     - results-{{ results_name }}.xml
     - report-{{ results_name }}.html
