@@ -27,6 +27,12 @@
       path: /var/www/html/stig
       state: directory
 
+  - name: Ensure unzipping utility is available
+    become: yes
+    package:
+      name: unzip
+      state: installed
+
   - name: Download and unarchive the content from {{ stig_download_file }}
     unarchive:
       src: '{{ stig_download_url }}/{{ stig_download_file }}.zip'
