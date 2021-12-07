@@ -1,7 +1,7 @@
 ---
 ansible-navigator:
   ansible:
-    inventories: hosts
+    inventories: ~/.ansible/rhel8_hosts
   execution-environment:
     container-engine: podman
     enabled: True
