@@ -62,6 +62,9 @@
       enabled: true
       state: started
 
+  - name: Collect facts about system services
+    service_facts:
+
   - name: Ensure http port is accessible
     become: yes
     ansible.posix.firewalld:
@@ -69,6 +72,7 @@
       permanent: yes
       immediate: yes
       state: enabled
+    when: '"firewalld.service" in ansible_facts.services'
 
   - name: Run a scan using the {{ stig_profile }} profile from {{ datastreams.files[0].path }}
     become: yes
