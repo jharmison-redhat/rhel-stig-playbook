@@ -2,17 +2,29 @@
   hosts: all
   become: yes
   tasks:
-  - name: Preinstall and fapolicyd
+  - name: Preinstall fapolicyd
     package:
       name: fapolicyd
       state: installed
+
+  - name: Start fapolicyd
+    service:
+      name: fapolicyd
+      state: started
+      enabled: yes
 
   - name: Preconfigure fapolicyd to prevent getting locked out
     lineinfile:
       path: /etc/fapolicyd/fapolicyd.rules
       insertafter: 'allow perm=any uid=0 : dir=/root/.ansible/tmp/'
       line: 'allow perm=any gid=wheel : ftype=text/x-python dir=/home'
-    register: fapolicy_rule_change
+    register: fapolicy_rule
+
+  - name: Restart fapolicyd
+    service:
+      name: fapolicyd
+      state: restarted
+    when: fapolicy_rule.changed
 
   - name: Include the STIG role for these hosts
     include_role:
