@@ -4,3 +4,8 @@ venv
 *.swp
 *.log
 .vault
+roles/*
+!roles/requirements.yml
+meta/*
+!meta/requirements.yml
+!meta/execution-environment.yml
